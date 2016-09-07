@@ -9,9 +9,7 @@ class Network:
 	# Class constructor
 	def __init__(self, networkSizes):
 		self.num_layers = len(networkSizes)
-		# self.weights = [np.random.randn(x, y) for x, y in zip(networkSizes[:-1], networkSizes[1:])]
-		# Initialize weights with standard deviation of 1/sqrt(input_size)
-		self.weights = [np.random.normal(0, 1/np.sqrt(networkSizes[0]), (x, y)) for x, y in zip(networkSizes[:-1], networkSizes[1:])]
+		self.weights = [np.random.randn(x, y) for x, y in zip(networkSizes[:-1], networkSizes[1:])]
 		self.biases = [np.random.randn(x, 1) for x in networkSizes[1:]]
 		mnist = datasets.fetch_mldata('MNIST Original')
 		data, target = mnist.data / 255., mnist.target
@@ -37,17 +35,15 @@ class Network:
 		for w, b in zip(self.weights, self.biases):
 			z = np.dot(w.transpose(), self.activations[-1]) + b
 			z = np.array(z)
-			a = self.sigmoid(z)
+			a = self.softmax(z)
 			self.zs.append(z)
 			self.activations.append(a)
 
-	# Sigmoid function
-	def sigmoid(self, z):
-		return 1.0 / (1.0 + np.exp(-z))
-
-	# Sigmoid function's Derivative
-	def sigmoid_derivative(self, z):
-		return self.sigmoid(z)*(1 - self.sigmoid(z))
+	# softmax function
+	def softmax(self, z):
+		sum = np.sum(np.exp(z))
+		a = [np.exp(z[i])/sum for i in range(len(z))]
+		return np.array(a)
 
 	# Vectorize output y to a (m x 1) vector
 	def vectorize(self, a):
@@ -67,7 +63,7 @@ class Network:
 				y_vectorized = self.vectorize(int(y))
 
 				# Compute delta of the last layer
-				delta_last = -(y_vectorized - self.activations[-1])*self.sigmoid_derivative(self.zs[-1])
+				delta_last = self.activations[-1] - y_vectorized
 
 				single_nabla_w, single_nabla_b = self.calculateNabla(delta_last)
 				
@@ -92,7 +88,7 @@ class Network:
 		nabla_b[-1] = delta
 
 		for l in range(2, self.num_layers):
-			delta = [a * b for a, b in zip(np.dot(self.weights[-l+1], delta), self.sigmoid_derivative(self.zs[-l]))]
+			delta = [a * b for a, b in zip(np.dot(self.weights[-l+1], delta), self.softmax_derivative(self.zs[-l]))]
 			nabla_b[-l] = delta
 			nabla_w[-l] = np.dot(delta, self.activations[-l - 1].transpose()).transpose()
 
