@@ -3,7 +3,10 @@ from sklearn.cross_validation import train_test_split
 import numpy as np
 import random
 
+# Network Class
 class Network:
+
+	# Class constructor
 	def __init__(self, networkSizes):
 		self.num_layers = len(networkSizes)
 		self.weights = [np.random.randn(x, y) for x, y in zip(networkSizes[:-1], networkSizes[1:])]
@@ -11,20 +14,20 @@ class Network:
 		mnist = datasets.fetch_mldata('MNIST Original')
 		data, target = mnist.data / 255., mnist.target
 
+		# Shuffle the dataset
 		random_indexes = [i for i in range(70000)]
 		random.shuffle(random_indexes)
 
 		data = [data[ri] for ri in random_indexes]
 		target = [target[ri] for ri in random_indexes]
 
+		# Split the dataset to training_set and testing_set
 		self.train_data = data[0:60000]
 		self.test_data = data[60000:70000]
 		self.train_target = target[0:60000]
 		self.test_target = target[60000:70000]
 
-		self.activations = []
-		self.zs = []
-
+	# Compute the activations of all layers
 	def computeActivations(self, X):
 		self.activations = []
 		self.zs = []
@@ -36,17 +39,21 @@ class Network:
 			self.zs.append(z)
 			self.activations.append(a)
 
+	# Sigmoid function
 	def sigmoid(self, z):
 		return 1.0 / (1.0 + np.exp(-z))
 
+	# Sigmoid function's Derivative
 	def sigmoid_derivative(self, z):
 		return self.sigmoid(z)*(1 - self.sigmoid(z))
 
+	# Vectorize output y to a (m x 1) vector
 	def vectorize(self, a):
 		y_vectorized = np.zeros((len(self.biases[-1]), 1))
 		y_vectorized[a] = 1.
 		return y_vectorized
 
+	# Back propagation
 	def back_propagation(self):
 		for mini_batch in self.mini_batches:
 			nabla_w = [np.zeros(w.shape) for w in self.weights]
@@ -57,18 +64,23 @@ class Network:
 
 				y_vectorized = self.vectorize(int(y))
 
+				# Compute delta of the last layer
 				delta_last = -(y_vectorized - self.activations[-1])*self.sigmoid_derivative(self.zs[-1])
 
 				single_nabla_w, single_nabla_b = self.calculateNabla(delta_last)
+				
+				# Compute gradient
 				nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, single_nabla_w)]
 				nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, single_nabla_b)]
 
 			temp_weights = self.weights
 			temp_biases = self.biases
 
+			# Update weights and biases of the network
 			self.weights = [w - (3. / len(mini_batch))*nw for w, nw in zip(temp_weights, nabla_w)]
 			self.biases = [b - (3. / len(mini_batch))*nb for b, nb in zip(temp_biases, nabla_b)]
 
+	# Compute nabla_w, nabla_b for each X, y in training set
 	def calculateNabla(self, delta):
 
 		nabla_w = [np.zeros(w.shape) for w in self.weights]
@@ -84,6 +96,7 @@ class Network:
 
 		return nabla_w, nabla_b
 
+	# Execute function
 	def runNetwork(self, epochs, mini_batch_size):
 		for i in range(epochs):
 			self.mini_batches = [list(zip(self.train_data[j:j+mini_batch_size], self.train_target[j:j+mini_batch_size])) for j in range(0, len(self.train_data), mini_batch_size)]
