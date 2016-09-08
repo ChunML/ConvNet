@@ -3,6 +3,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.cross_validation import cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.grid_search import GridSearchCV
+from sklearn import metrics
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -28,14 +29,16 @@ def initialize():
 
 def train_evaluate(clf):
 	data, target = load_data()
-	clf.fit(data, target)
+	clf.fit(data[:60000], target[:60000])
 	return clf
 
 def run():
 	clf = initialize()
-	result = train_evaluate(clf)
-	print(clf.grid_scores_)
+	clf = train_evaluate(clf)
+	data, target = load_data()
+	result = clf.predict(data[60000:])
+
+	# Best result: 99.49%
+	# Params: criterion: 'gini', n_estimators=50, verbose=1
 	print(clf.best_estimator_)
-	print(clf.best_score_)
-	print(clf.best_params_)
-	print(clf.scorer_)
+	print(np.mean(metrics.accuracy_score(target[60000:], result)))
