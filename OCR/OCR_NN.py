@@ -67,7 +67,7 @@ class Network:
 				y_vectorized = self.vectorize(int(y))
 
 				# Compute delta of the last layer
-				delta_last = -(y_vectorized - self.activations[-1])*self.sigmoid_derivative(self.zs[-1])
+				delta_last = (self.activations[-1] - y_vectorized)
 
 				single_nabla_w, single_nabla_b = self.calculateNabla(delta_last)
 				
@@ -93,7 +93,8 @@ class Network:
 		nabla_b[-1] = delta
 
 		for l in range(2, self.num_layers):
-			delta = [a * b for a, b in zip(np.dot(self.weights[-l+1], delta), self.sigmoid_derivative(self.zs[-l]))]
+			A = [a * b for a, b in zip(self.activations[-l], (1 - self.activations[-l]))]
+			delta = [a * b for a, b in zip(np.dot(self.weights[-l+1], delta), A)]
 			nabla_b[-l] = delta
 			nabla_w[-l] = np.dot(delta, self.activations[-l - 1].transpose()).transpose()
 
