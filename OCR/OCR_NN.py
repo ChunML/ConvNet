@@ -24,9 +24,9 @@ class Network:
 		target = [target[ri] for ri in random_indexes]
 
 		# Split the dataset to training_set and testing_set
-		self.train_data = data[0:60000]
+		self.train_data = data[0:50000]
 		self.test_data = data[60000:70000]
-		self.train_target = target[0:60000]
+		self.train_target = target[0:50000]
 		self.test_target = target[60000:70000]
 
 	# Compute the activations of all layers
@@ -79,8 +79,9 @@ class Network:
 			temp_biases = self.biases
 
 			# Update weights and biases of the network
-			self.weights = [w - (3. / len(mini_batch))*nw for w, nw in zip(temp_weights, nabla_w)]
-			self.biases = [b - (3. / len(mini_batch))*nb for b, nb in zip(temp_biases, nabla_b)]
+			regularization = self.lmbda*self.eta/len(self.train_data)
+			self.weights = [(1 - regularization)*w - (self.eta / len(mini_batch))*nw for w, nw in zip(temp_weights, nabla_w)]
+			self.biases = [b - (self.eta / len(mini_batch))*nb for b, nb in zip(temp_biases, nabla_b)]
 
 	# Compute nabla_w, nabla_b for each X, y in training set
 	def calculateNabla(self, delta):
@@ -99,7 +100,9 @@ class Network:
 		return nabla_w, nabla_b
 
 	# Execute function
-	def runNetwork(self, epochs, mini_batch_size):
+	def runNetwork(self, epochs, mini_batch_size, eta, lmbda):
+		self.eta = eta
+		self.lmbda = lmbda
 		for i in range(epochs):
 			self.mini_batches = [list(zip(self.train_data[j:j+mini_batch_size], self.train_target[j:j+mini_batch_size])) for j in range(0, len(self.train_data), mini_batch_size)]
 			self.back_propagation()

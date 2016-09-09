@@ -42,15 +42,15 @@ for i in range(len(contours)):
 			cv2.rectangle(output, (tempRect[0], tempRect[1]), (tempRect[0] + tempRect[2], tempRect[1] + tempRect[3]), (0, 255, 0), 2)
 
 			# Crop the bounding rectangle from the original binary image
-			number = plate_gray[tempRect[1]:tempRect[1]+tempRect[3], tempRect[0]:tempRect[0]+tempRect[2]]	
+			number = plate_gray[tempRect[1]:tempRect[1]+tempRect[3], tempRect[0]:tempRect[0]+tempRect[2]]
 			
 			# Here I just wanted to add some margin to the cropped ROI
-			dh = tempRect[3] * 0.5
-			dw = tempRect[2] * 0.7
+			dh = int(tempRect[3] * 0.5)
+			dw = int(tempRect[2] * 0.7)
 
 			# Check if it's '1' letter for '1' letters have large height/width ratio
 			ratio = tempRect[3] / float(tempRect[2])
-			print(ratio)
+			
 			if (ratio > 2.6):
 				dw = tempRect[2] * 4
 			new_number = np.ones((tempRect[3] + dh, tempRect[2] + dw), 'uint8') * 255
@@ -67,7 +67,7 @@ resized_numbers = []
 for i, number in enumerate(numbers):
 	number = cv2.resize(number, (28, 28))
 	resized_numbers.append(number)
-	cv2.imshow('Roi {}'.format(i), number)
+	# cv2.imshow('Roi {}'.format(i), number)
 	# The 28x28 must be reshaped to be accepted by the classifier
 	test_data.append(np.reshape(number/255., (784,1)))
 
@@ -93,6 +93,7 @@ for i, result in enumerate(results):
 	# For visualizing each letter
 	#cv2.imshow('Roi {}'.format(i), resized_numbers[i])
 
+cv2.imshow('Input', plate)
 cv2.imshow('Result', output)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
