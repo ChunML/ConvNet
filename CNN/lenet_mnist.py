@@ -23,7 +23,7 @@ data = dataset.data.reshape((dataset.data.shape[0], 28, 28))
 data = data[:, np.newaxis, :, :]
 train_data, test_data, train_label, test_label = train_test_split(data / 255., dataset.target.astype('int'), test_size=0.33)
 
-# Vectorize label 
+# Vectorize label
 # Ex: y = '2' -> y = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
 train_label = np_utils.to_categorical(train_label, 10)
 test_label = np_utils.to_categorical(test_label, 10)
@@ -32,7 +32,7 @@ test_label = np_utils.to_categorical(test_label, 10)
 print("[INFO] compiling model...")
 opt = SGD(lr=0.01) # learning rate = 0.01
 model = lenet.LeNet.build(width=28, height=28, depth=1, classes=10, weightsPath=args["weights"] if args["load_model"] > 0 else None)
-model.compile(loss="categorical_crossentropy", optimizer=None, metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
 # Train if there is no pre-trained model
 if args["load_model"] < 0:
