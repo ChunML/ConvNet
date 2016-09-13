@@ -24,7 +24,7 @@ class LeNet:
 
 		# FC => RELU
 		model.add(Flatten())
-		model.add(Dense(800))
+		model.add(Dense(1000))
 		model.add(Activation("relu"))
 
 		# Softmax classifier

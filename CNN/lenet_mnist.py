@@ -37,7 +37,7 @@ model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy
 # Train if there is no pre-trained model
 if args["load_model"] < 0:
 	print("[INFO] training...")
-	model.fit(train_data, train_label, batch_size=128, nb_epoch=20, verbose=1)
+	model.fit(train_data, train_label, batch_size=128, nb_epoch=50, verbose=1)
 
 	print("[INFO] evaluating...")
 	loss, accuracy = model.evaluate(test_data, test_label, batch_size=128, verbose=1)
