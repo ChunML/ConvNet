@@ -5,7 +5,7 @@ from keras.optimizers import SGD
 from keras.utils import np_utils
 import numpy as np
 import argparse
-#import cv2
+import cv2
 
 # Construct argument parse
 ap = argparse.ArgumentParser()
@@ -46,3 +46,19 @@ if args["load_model"] < 0:
 if args["save_model"] > 0:
 	print("[INFO] dumping weights to file...")
 	model.save_weights(args["weights"], overwrite=True)
+
+# Randomly print test image with predicted label
+for i in np.random.choice(np.arange(0, len(test_label)), size=(30,)):
+	# Classify the digit
+	probs = model.predict(test_data[np.newaxis, i])
+	pred = probs.argmax(axis=1)
+
+	# Enlarge the image
+	image = (test_data[i][0] * 255).astype('uint8')
+	image = cv2.merge([image] * 3)
+	image = cv2.resize(image, (96, 96), interpolation=cv2.INTER_LINEAR)
+	cv2.putText(image, str(pred[0]), (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
+
+	print("[INFO] Predicted: {}, Actual: {}".format(pred[0], np.argmax(test_label[i])))
+	cv2.imshow("Digit", image)
+	cv2.waitKey(0)
