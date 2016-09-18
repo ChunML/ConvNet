@@ -54,7 +54,7 @@ for i in np.random.choice(np.arange(0, len(test_label)), size=(30,)):
         pred = probs.argmax(axis=1)
 
         # Enlarge the image
-        image = cv2.resize(test_data[i, 0, :, :], (96, 96), interpolation=cv2.INTER_LINEAR)
+        image = cv2.resize(test_data[i][0], (96, 96), interpolation=cv2.INTER_LINEAR)
         cv2.putText(image, str(pred[0]), (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 255, 0), 2)
 
         print("[INFO] Predicted: {}, Actual: {}".format(pred[0], np.argmax(test_label[i])))
