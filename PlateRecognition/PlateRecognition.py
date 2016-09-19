@@ -3,97 +3,110 @@ import numpy as np
 import matplotlib.pyplot as plt
 import OCR_NN
 import OCR_RandomForest as forest
+import os
 
-# Load image and convert to gray scale
-plate = cv2.imread('numbers_1.jpg')
-plate_gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+folder = 'image'
+files = [os.path.join(folder, f) for f in os.listdir(folder)]
 
-# Threshold the grayscale image to get binary image
-ret, binary = cv2.threshold(plate_gray, 100, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+for file in files:
 
-# Find contours to seperate each letter
-contours, hierarchy = cv2.findContours(binary.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+	# Load image and convert to gray scale
+	plate = cv2.imread(file)
+	plate_gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
 
-# Clone the input image for output purpose
-output = plate.copy()
+	# Display original image
+	cv2.imshow('Input', plate)
+	cv2.waitKey(0)
 
-# Create an array to store bounding rectangles around contours found above
-rect = []
+	# Threshold the grayscale image to get binary image
+	ret, binary = cv2.threshold(plate_gray, 100, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-# Create an array of images to store each letter seperately
-numbers = []
+	# Find contours to seperate each letter
+	contours, hierarchy = cv2.findContours(binary.copy(), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
 
-# Kernel used for erosing
-kernel = np.ones((3,3), 'uint8')
+	# Clone the input image for output purpose
+	output = plate.copy()
 
-# Loop over each contours
-for i in range(len(contours)):
+	# Create an array to store bounding rectangles around contours found above
+	rect = []
 
-	tempRect = cv2.boundingRect(contours[i])
+	# Create an array of images to store each letter seperately
+	numbers = []
 
-	# Check the area of the bounding rectangle to eliminate small contour
-	if (tempRect[2] * tempRect[3] >= 100 and tempRect[2] * tempRect[3] < 3600):
-		# If a contour has a parent but no child, so it's a hole inside a letter
-		if (hierarchy[0][i][3] != -1 & hierarchy[0][i][2] == -1):
-			continue
-		else:
-			rect.append(tempRect)
-			# Draw rectangle on the output image
-			cv2.rectangle(output, (tempRect[0], tempRect[1]), (tempRect[0] + tempRect[2], tempRect[1] + tempRect[3]), (0, 255, 0), 2)
+	# Kernel used for erosing
+	kernel = np.ones((3,3), 'uint8')
 
-			# Crop the bounding rectangle from the original binary image
-			number = plate_gray[tempRect[1]:tempRect[1]+tempRect[3], tempRect[0]:tempRect[0]+tempRect[2]]
-			
-			# Here I just wanted to add some margin to the cropped ROI
-			dh = int(tempRect[3] * 0.5)
-			dw = int(tempRect[2] * 0.7)
+	# Loop over each contours
+	for i in range(len(contours)):
 
-			# Check if it's '1' letter for '1' letters have large height/width ratio
-			ratio = tempRect[3] / float(tempRect[2])
-			
-			if (ratio > 2.6):
-				dw = tempRect[2] * 4
-			new_number = np.ones((tempRect[3] + dh, tempRect[2] + dw), 'uint8') * 255
-			new_number[dh/2:tempRect[3]+dh/2, dw/2:tempRect[2]+dw/2] = number
-			
-			numbers.append(cv2.subtract(255, new_number))
+		tempRect = cv2.boundingRect(contours[i])
 
-# Create an array to store 784x1 images used for training
-test_data = []
+		# Check the area of the bounding rectangle to eliminate small contour
+		if (tempRect[2] * tempRect[3] >= 100 and tempRect[2] * tempRect[3] < 10000):
+			# If a contour has a parent but no child, so it's a hole inside a letter
+			if (hierarchy[0][i][3] != -1 & hierarchy[0][i][2] == -1):
+				continue
+			else:
+				rect.append(tempRect)
+				# Draw rectangle on the output image
+				cv2.rectangle(output, (tempRect[0], tempRect[1]), (tempRect[0] + tempRect[2], tempRect[1] + tempRect[3]), (0, 255, 0), 2)
 
-# Create an array to store 28x28 images
-resized_numbers = []
+				# Crop the bounding rectangle from the original binary image
+				number = plate_gray[tempRect[1]:tempRect[1]+tempRect[3], tempRect[0]:tempRect[0]+tempRect[2]]
+				
+				# Here I just wanted to add some margin to the cropped ROI
+				dh = int(tempRect[3] * 0.5)
+				dw = int(tempRect[2] * 0.7)
 
-for i, number in enumerate(numbers):
-	number = cv2.resize(number, (28, 28))
-	resized_numbers.append(number)
-	# cv2.imshow('Roi {}'.format(i), number)
-	# The 28x28 must be reshaped to be accepted by the classifier
-	test_data.append(np.reshape(number/255., (784,1)))
+				# Check if it's '1' letter for '1' letters have large height/width ratio
+				ratio = tempRect[3] / float(tempRect[2])
+				
+				if (ratio > 2.6):
+					dw = tempRect[2] * 4
+				new_number = np.ones((tempRect[3] + dh, tempRect[2] + dw), 'uint8') * 255
+				new_number[dh/2:tempRect[3]+dh/2, dw/2:tempRect[2]+dw/2] = number
+				
+				numbers.append(cv2.subtract(255, new_number))
 
-# np.savetxt('test.csv', test_data)
+	# Display output image with contours
+	cv2.imshow('Result', output)
 
-"""
-# Create an instance of RandomForest classifier
-clf = forest.initialize()
+	# Create an array to store 784x1 images used for training
+	test_data = []
 
-# Train the model using MNIST dataset
-clf = forest.train_evaluate(clf)
-"""
+	# Create an array to store 28x28 images
+	resized_numbers = []
 
-clf = OCR_NN.Network([784, 100, 10])
-results = clf.predict(test_data)
+	for i, number in enumerate(numbers):
+		number = cv2.resize(number, (28, 28))
+		resized_numbers.append(number)
+		# cv2.imshow('Roi {}'.format(i), number)
+		# The 28x28 must be reshaped to be accepted by the classifier
+		test_data.append(np.reshape(number/255., (784,1)))
 
-print(results)
+	# np.savetxt('test.csv', test_data)
 
-for i, result in enumerate(results):
-	# Put the result on each letter of output image
-	cv2.putText(output, str(int(result)), (rect[i][0]+rect[i][2], rect[i][1]+rect[i][3]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+	"""
+	# Create an instance of RandomForest classifier
+	clf = forest.initialize()
 
-	# For visualizing each letter
-	#cv2.imshow('Roi {}'.format(i), resized_numbers[i])
+	# Train the model using MNIST dataset
+	clf = forest.train_evaluate(clf)
+	"""
 
-cv2.imshow('Input', plate)
-cv2.imshow('Result', output)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+	clf = OCR_NN.Network([784, 100, 10])
+	results = clf.predict(test_data)
+
+	cv2.waitKey(0)
+
+	for i, result in enumerate(results):
+		print(result)
+		# Put the result on each letter of output image
+		cv2.putText(output, str(int(result)), (rect[i][0]+rect[i][2]-10, rect[i][1]+rect[i][3]+17), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+		cv2.imshow('Result', output)
+		cv2.waitKey(80)
+		# For visualizing each letter
+		#cv2.imshow('Roi {}'.format(i), resized_numbers[i])
+
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
