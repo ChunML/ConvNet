@@ -21,11 +21,14 @@ print("[INFO] loading CIFAR-10...")
 
 data = np.load('cifar-10/data.npy')
 data = data.reshape(data.shape[0], 3, 32, 32)
+data = data / 255.
+target = np.load('cifar-10/label.npy').astype('int')
 
-train_data, test_data, train_label, test_label = train_test_split(data / 255., np.load('cifar-10/label.npy').astype('int'), test_size=0.15)
+train_data, test_data, train_label, test_label = train_test_split(data, target, test_size=0.15)
 
 # Vectorize label
 # Ex: y = '2' -> y = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+target = np_utils.to_categorical(target, 10)
 train_label = np_utils.to_categorical(train_label, 10)
 test_label = np_utils.to_categorical(test_label, 10)
 
@@ -42,7 +45,7 @@ callbacks_list = [checkpoint]
 # Train if there is no pre-trained model
 if args["load_model"] < 0:
         print("[INFO] training...")
-        model.fit(train_data, train_label, batch_size=128, nb_epoch=50, verbose=1, callbacks=callbacks_list)
+        model.fit(data, target, validation_split=0.15, batch_size=128, nb_epoch=50, verbose=1, callbacks=callbacks_list)
 
         print("[INFO] evaluating...")
         loss, accuracy = model.evaluate(test_data, test_label, batch_size=128, verbose=1)

@@ -22,10 +22,13 @@ dataset = datasets.fetch_mldata("MNIST Original")
 # Flatten MNIST data and rescale to [0 1.0] range
 data = dataset.data.reshape((dataset.data.shape[0], 28, 28))
 data = data[:, np.newaxis, :, :]
-train_data, test_data, train_label, test_label = train_test_split(data / 255., dataset.target.astype('int'), test_size=0.33)
+data = data / 255.
+target = dataset.target.astype('int')
+train_data, test_data, train_label, test_label = train_test_split(data, target, test_size=0.33)
 
 # Vectorize label
 # Ex: y = '2' -> y = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+target = np_utils.to_categorical(target, 10)
 train_label = np_utils.to_categorical(train_label, 10)
 test_label = np_utils.to_categorical(test_label, 10)
 
@@ -42,7 +45,7 @@ callbacks_list = [checkpoint]
 # Train if there is no pre-trained model
 if args["load_model"] < 0:
 	print("[INFO] training...")
-	model.fit(train_data, train_label, batch_size=128, nb_epoch=50, verbose=1, callbacks=callbacks_list)
+	model.fit(data, target, validation_split=0.33, batch_size=128, nb_epoch=50, verbose=1, callbacks=callbacks_list)
 
 	print("[INFO] evaluating...")
 	loss, accuracy = model.evaluate(test_data, test_label, batch_size=128, verbose=1)
