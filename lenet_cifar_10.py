@@ -3,6 +3,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import datasets
 from keras.optimizers import SGD
 from keras.utils import np_utils
+from keras.callbacks import ModelCheckpoint
 import numpy as np
 import argparse
 import cv2
@@ -34,10 +35,14 @@ opt = SGD(lr=0.01) # learning rate = 0.01
 model = lenet.LeNet.build(width=32, height=32, depth=3, classes=10, weightsPath=args["weights"] if args["load_model"] > 0 else None)
 model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
+# Add checkpoint in case the program quits unexpectedly
+checkpoint = ModelCheckpoint(args['weights'], monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
+
 # Train if there is no pre-trained model
 if args["load_model"] < 0:
         print("[INFO] training...")
-        model.fit(train_data, train_label, batch_size=128, nb_epoch=50, verbose=1)
+        model.fit(train_data, train_label, batch_size=128, nb_epoch=50, verbose=1, callbacks=callbacks_list)
 
         print("[INFO] evaluating...")
         loss, accuracy = model.evaluate(test_data, test_label, batch_size=128, verbose=1)
